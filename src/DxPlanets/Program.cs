@@ -27,14 +27,14 @@ namespace DxPlanets
                 height = form.Height,
                 formHandle = form.Handle
             };
-            var pipelineContext = LoadPipeline(pipelineSettings);
-            var renderContext = LoadAssets(pipelineContext);
+            var pipeline = LoadPipeline(pipelineSettings);
+            var pipelineAssets = LoadAssets(pipeline);
 
             form.Shown += (object sender, System.EventArgs e) =>
             {
                 while (true)
                 {
-                    Render(renderContext, viewport, scissorRectangle);
+                    Render(pipelineAssets, viewport, scissorRectangle);
                 }
             };
 
@@ -49,7 +49,7 @@ namespace DxPlanets
             public System.IntPtr formHandle;
         }
 
-        class PipelineContext
+        class Pipeline
         {
             public PipelineSettings pipelineSettings;
             public SharpDX.Direct3D12.Device device;
@@ -62,17 +62,25 @@ namespace DxPlanets
             public int frameIndex;
         }
 
-        class RenderContext
+        class PipelineAssets
         {
-            public PipelineContext pipelineContext;
+            public Pipeline pipeline;
             public SharpDX.Direct3D12.GraphicsCommandList commandList;
             public SharpDX.Direct3D12.RootSignature rootSignature;
             public SharpDX.Direct3D12.Fence fence;
             public System.Threading.AutoResetEvent fenceEvent;
+            public SharpDX.Direct3D12.PipelineState pipelineState;
+            public SharpDX.Direct3D12.VertexBufferView vertexBufferView;
             public int[] fenceValues;
         }
 
-        static PipelineContext LoadPipeline(PipelineSettings pipelineSettings)
+        struct Vertex
+        {
+            public SharpDX.Vector3 Position;
+            public SharpDX.Vector4 Color;
+        };
+
+        static Pipeline LoadPipeline(PipelineSettings pipelineSettings)
         {
             var device = new SharpDX.Direct3D12.Device(null, SharpDX.Direct3D.FeatureLevel.Level_12_1);
             var queueDescription = new SharpDX.Direct3D12.CommandQueueDescription(SharpDX.Direct3D12.CommandListType.Direct);
@@ -110,7 +118,7 @@ namespace DxPlanets
                 device.CreateRenderTargetView(renderTargets[i], null, rtvHandle);
                 rtvHandle += rtvDescriptorSize;
             }
-            return new PipelineContext
+            return new Pipeline
             {
                 pipelineSettings = pipelineSettings,
                 device = device,
@@ -124,64 +132,116 @@ namespace DxPlanets
             };
         }
 
-        static RenderContext LoadAssets(PipelineContext pipelineContext)
+        static PipelineAssets LoadAssets(Pipeline pipeline)
         {
             var rootSignatureDescription = new SharpDX.Direct3D12.RootSignatureDescription(SharpDX.Direct3D12.RootSignatureFlags.AllowInputAssemblerInputLayout);
-            var rootSignature = pipelineContext.device.CreateRootSignature(rootSignatureDescription.Serialize());
+            var rootSignature = pipeline.device.CreateRootSignature(rootSignatureDescription.Serialize());
+
+            var vertexShader = new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile("src/Shaders/FlatColor.hlsl", "VSMain", "vs_5_0"));
+            var pixelShader = new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile("src/Shaders/FlatColor.hlsl", "PSMain", "ps_5_0"));
+            var inputElementDescs = new[]
+            {
+                    new SharpDX.Direct3D12.InputElement("POSITION", 0, SharpDX.DXGI.Format.R32G32B32_Float, 0, 0),
+                    new SharpDX.Direct3D12.InputElement("COLOR", 0, SharpDX.DXGI.Format.R32G32B32A32_Float, 12, 0)
+            };
+            var pipelineStateObjectDescription = new SharpDX.Direct3D12.GraphicsPipelineStateDescription()
+            {
+                InputLayout = new SharpDX.Direct3D12.InputLayoutDescription(inputElementDescs),
+                RootSignature = rootSignature,
+                VertexShader = vertexShader,
+                PixelShader = pixelShader,
+                RasterizerState = SharpDX.Direct3D12.RasterizerStateDescription.Default(),
+                BlendState = SharpDX.Direct3D12.BlendStateDescription.Default(),
+                DepthStencilFormat = SharpDX.DXGI.Format.D32_Float,
+                DepthStencilState = new SharpDX.Direct3D12.DepthStencilStateDescription() { IsDepthEnabled = false, IsStencilEnabled = false },
+                SampleMask = int.MaxValue,
+                PrimitiveTopologyType = SharpDX.Direct3D12.PrimitiveTopologyType.Triangle,
+                RenderTargetCount = 1,
+                Flags = SharpDX.Direct3D12.PipelineStateFlags.None,
+                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
+                StreamOutput = new SharpDX.Direct3D12.StreamOutputDescription()
+            };
+            pipelineStateObjectDescription.RenderTargetFormats[0] = SharpDX.DXGI.Format.R8G8B8A8_UNorm;
+            var pipelineState = pipeline.device.CreateGraphicsPipelineState(pipelineStateObjectDescription);
+
             var fenceEvent = new System.Threading.AutoResetEvent(false);
-            var fence = pipelineContext.device.CreateFence(0, SharpDX.Direct3D12.FenceFlags.None);
-            var fenceValues = new int[pipelineContext.pipelineSettings.frameCount];
-            for (int i = 0; i < pipelineContext.pipelineSettings.frameCount; i++)
+            var fence = pipeline.device.CreateFence(0, SharpDX.Direct3D12.FenceFlags.None);
+            var fenceValues = new int[pipeline.pipelineSettings.frameCount];
+            for (int i = 0; i < pipeline.pipelineSettings.frameCount; i++)
             {
                 fenceValues[i] = 1;
             }
-            var commandList = pipelineContext.device.CreateCommandList(SharpDX.Direct3D12.CommandListType.Direct, pipelineContext.commandAllocators[pipelineContext.frameIndex], null);
+            var commandList = pipeline.device.CreateCommandList(SharpDX.Direct3D12.CommandListType.Direct, pipeline.commandAllocators[pipeline.frameIndex], pipelineState);
             commandList.Close();
-            return new RenderContext
+
+            var triangleVertices = new[]
             {
-                pipelineContext = pipelineContext,
+                    new Vertex() { Position=new SharpDX.Vector3(0.0f, 0.25f, 0.0f ), Color=new SharpDX.Vector4(1.0f, 0.0f, 0.0f, 1.0f ) },
+                    new Vertex() { Position=new SharpDX.Vector3(0.25f, -0.25f, 0.0f), Color=new SharpDX.Vector4(0.0f, 1.0f, 0.0f, 1.0f) },
+                    new Vertex() { Position=new SharpDX.Vector3(-0.25f, -0.25f, 0.0f), Color=new SharpDX.Vector4(0.0f, 0.0f, 1.0f, 1.0f ) }
+            };
+            var vertexBufferSize = SharpDX.Utilities.SizeOf(triangleVertices);
+            var vertexBuffer = pipeline.device.CreateCommittedResource(new SharpDX.Direct3D12.HeapProperties(SharpDX.Direct3D12.HeapType.Upload), SharpDX.Direct3D12.HeapFlags.None, SharpDX.Direct3D12.ResourceDescription.Buffer(vertexBufferSize), SharpDX.Direct3D12.ResourceStates.GenericRead);
+            var pVertexDataBegin = vertexBuffer.Map(0);
+            SharpDX.Utilities.Write(pVertexDataBegin, triangleVertices, 0, triangleVertices.Length);
+            vertexBuffer.Unmap(0);
+            var vertexBufferView = new SharpDX.Direct3D12.VertexBufferView();
+            vertexBufferView.BufferLocation = vertexBuffer.GPUVirtualAddress;
+            vertexBufferView.StrideInBytes = SharpDX.Utilities.SizeOf<Vertex>();
+            vertexBufferView.SizeInBytes = vertexBufferSize;
+
+            return new PipelineAssets
+            {
+                pipeline = pipeline,
                 commandList = commandList,
                 rootSignature = rootSignature,
                 fence = fence,
                 fenceEvent = fenceEvent,
+                pipelineState = pipelineState,
+                vertexBufferView = vertexBufferView,
                 fenceValues = fenceValues
             };
         }
 
-        static void PopulateCommandList(RenderContext renderContext, SharpDX.ViewportF viewport, SharpDX.Rectangle scissorRectangle)
+        static void PopulateCommandList(PipelineAssets pipelineAssets, SharpDX.ViewportF viewport, SharpDX.Rectangle scissorRectangle)
         {
-            renderContext.pipelineContext.commandAllocators[renderContext.pipelineContext.frameIndex].Reset();
-            renderContext.commandList.Reset(renderContext.pipelineContext.commandAllocators[renderContext.pipelineContext.frameIndex], null);
-            renderContext.commandList.SetGraphicsRootSignature(renderContext.rootSignature);
-            renderContext.commandList.SetViewport(viewport);
-            renderContext.commandList.SetScissorRectangles(scissorRectangle);
-            renderContext.commandList.ResourceBarrierTransition(renderContext.pipelineContext.renderTargets[renderContext.pipelineContext.frameIndex], SharpDX.Direct3D12.ResourceStates.Present, SharpDX.Direct3D12.ResourceStates.RenderTarget);
-            var rtvHandle = renderContext.pipelineContext.renderTargetViewHeap.CPUDescriptorHandleForHeapStart + renderContext.pipelineContext.frameIndex * renderContext.pipelineContext.rtvDescriptorSize;
-            renderContext.commandList.SetRenderTargets(rtvHandle, null);
-            renderContext.commandList.ClearRenderTargetView(rtvHandle, renderContext.pipelineContext.frameIndex == 0 ? new SharpDX.Color4(0, 0.2f, 0.6f, 1) : new SharpDX.Color4(0.6f, 0.2f, 0, 1), 0, null);
-            renderContext.commandList.ResourceBarrierTransition(renderContext.pipelineContext.renderTargets[renderContext.pipelineContext.frameIndex], SharpDX.Direct3D12.ResourceStates.RenderTarget, SharpDX.Direct3D12.ResourceStates.Present);
-            renderContext.commandList.Close();
+            pipelineAssets.pipeline.commandAllocators[pipelineAssets.pipeline.frameIndex].Reset();
+            pipelineAssets.commandList.Reset(pipelineAssets.pipeline.commandAllocators[pipelineAssets.pipeline.frameIndex], pipelineAssets.pipelineState);
+            pipelineAssets.commandList.SetGraphicsRootSignature(pipelineAssets.rootSignature);
+            pipelineAssets.commandList.SetViewport(viewport);
+            pipelineAssets.commandList.SetScissorRectangles(scissorRectangle);
+            pipelineAssets.commandList.ResourceBarrierTransition(pipelineAssets.pipeline.renderTargets[pipelineAssets.pipeline.frameIndex], SharpDX.Direct3D12.ResourceStates.Present, SharpDX.Direct3D12.ResourceStates.RenderTarget);
+
+            var rtvHandle = pipelineAssets.pipeline.renderTargetViewHeap.CPUDescriptorHandleForHeapStart + pipelineAssets.pipeline.frameIndex * pipelineAssets.pipeline.rtvDescriptorSize;
+            pipelineAssets.commandList.SetRenderTargets(rtvHandle, null);
+            pipelineAssets.commandList.ClearRenderTargetView(rtvHandle, new SharpDX.Color4(0, 0.2f, 0.6f, 1), 0, null);
+            pipelineAssets.commandList.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
+            pipelineAssets.commandList.SetVertexBuffer(0, pipelineAssets.vertexBufferView);
+            pipelineAssets.commandList.DrawInstanced(3, 1, 0, 0);
+
+            pipelineAssets.commandList.ResourceBarrierTransition(pipelineAssets.pipeline.renderTargets[pipelineAssets.pipeline.frameIndex], SharpDX.Direct3D12.ResourceStates.RenderTarget, SharpDX.Direct3D12.ResourceStates.Present);
+            pipelineAssets.commandList.Close();
         }
 
-        static void Render(RenderContext renderContext, SharpDX.ViewportF viewport, SharpDX.Rectangle scissorRectangle)
+        static void Render(PipelineAssets pipelineAssets, SharpDX.ViewportF viewport, SharpDX.Rectangle scissorRectangle)
         {
-            PopulateCommandList(renderContext, viewport, scissorRectangle);
-            renderContext.pipelineContext.commandQueue.ExecuteCommandList(renderContext.commandList);
-            renderContext.pipelineContext.swapChain3.Present(1, 0);
-            MoveToNextFrame(renderContext);
+            PopulateCommandList(pipelineAssets, viewport, scissorRectangle);
+            pipelineAssets.pipeline.commandQueue.ExecuteCommandList(pipelineAssets.commandList);
+            pipelineAssets.pipeline.swapChain3.Present(1, 0);
+            MoveToNextFrame(pipelineAssets);
         }
 
-        static void MoveToNextFrame(RenderContext renderContext)
+        static void MoveToNextFrame(PipelineAssets pipelineAssets)
         {
-            var currentFenceValue = renderContext.fenceValues[renderContext.pipelineContext.frameIndex];
-            renderContext.pipelineContext.commandQueue.Signal(renderContext.fence, currentFenceValue);
-            renderContext.pipelineContext.frameIndex = renderContext.pipelineContext.swapChain3.CurrentBackBufferIndex;
-            if (renderContext.fence.CompletedValue < renderContext.fenceValues[renderContext.pipelineContext.frameIndex])
+            var currentFenceValue = pipelineAssets.fenceValues[pipelineAssets.pipeline.frameIndex];
+            pipelineAssets.pipeline.commandQueue.Signal(pipelineAssets.fence, currentFenceValue);
+            pipelineAssets.pipeline.frameIndex = pipelineAssets.pipeline.swapChain3.CurrentBackBufferIndex;
+            if (pipelineAssets.fence.CompletedValue < pipelineAssets.fenceValues[pipelineAssets.pipeline.frameIndex])
             {
-                renderContext.fence.SetEventOnCompletion(renderContext.fenceValues[renderContext.pipelineContext.frameIndex], renderContext.fenceEvent.SafeWaitHandle.DangerousGetHandle());
-                renderContext.fenceEvent.WaitOne();
+                pipelineAssets.fence.SetEventOnCompletion(pipelineAssets.fenceValues[pipelineAssets.pipeline.frameIndex], pipelineAssets.fenceEvent.SafeWaitHandle.DangerousGetHandle());
+                pipelineAssets.fenceEvent.WaitOne();
             }
-            renderContext.fenceValues[renderContext.pipelineContext.frameIndex] = currentFenceValue + 1;
+            pipelineAssets.fenceValues[pipelineAssets.pipeline.frameIndex] = currentFenceValue + 1;
         }
     }
 }
