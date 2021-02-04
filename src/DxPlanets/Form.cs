@@ -1,4 +1,4 @@
-﻿namespace dx_planets
+﻿namespace DxPlanets
 {
     public partial class Form : System.Windows.Forms.Form
     {
