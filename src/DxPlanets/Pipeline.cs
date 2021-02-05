@@ -1,7 +1,0 @@
-namespace DxPlanets
-{
-    class Pipeline
-    {
-
-    }
-}
