@@ -2,7 +2,7 @@ namespace DxPlanets.Pipeline
 {
     class Pipeline
     {
-        private int frameCount;
+        public int FrameCount { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
         public SharpDX.Direct3D12.Device Device { get; private set; }
@@ -20,7 +20,7 @@ namespace DxPlanets.Pipeline
         public Pipeline(int frameCount, int width, int height, System.IntPtr formHandle)
         {
             // Fields
-            this.frameCount = frameCount;
+            this.FrameCount = frameCount;
             Width = width;
             Height = height;
 
@@ -92,10 +92,10 @@ namespace DxPlanets.Pipeline
             {
                 renderTarget.Dispose();
             }
-            SwapChain3.ResizeBuffers(frameCount, width, height, SharpDX.DXGI.Format.R8G8B8A8_UNorm, SharpDX.DXGI.SwapChainFlags.AllowModeSwitch);
+            SwapChain3.ResizeBuffers(FrameCount, width, height, SharpDX.DXGI.Format.R8G8B8A8_UNorm, SharpDX.DXGI.SwapChainFlags.AllowModeSwitch);
             FrameIndex = SwapChain3.CurrentBackBufferIndex;
             var rtvHandle = RenderTargetViewHeap.CPUDescriptorHandleForHeapStart;
-            for (int i = 0; i < frameCount; i++)
+            for (int i = 0; i < FrameCount; i++)
             {
                 RenderTargets[i] = SwapChain3.GetBackBuffer<SharpDX.Direct3D12.Resource>(i);
                 Device.CreateRenderTargetView(RenderTargets[i], null, rtvHandle);

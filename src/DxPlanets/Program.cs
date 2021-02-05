@@ -24,8 +24,8 @@ namespace DxPlanets
 
             form.Paint += (object sender, System.Windows.Forms.PaintEventArgs e) =>
             {
-                Render(pipeline, pipelineAssets);
-                pipeline.MoveToNextFrame();
+                // Render(pipeline, pipelineAssets);
+                // pipeline.MoveToNextFrame();
             };
 
             System.Windows.Forms.Application.Run(form);
