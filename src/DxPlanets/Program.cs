@@ -13,44 +13,47 @@ namespace DxPlanets
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
 
             var form = new Form(600, 400);
-            var viewport = new SharpDX.ViewportF(0, 0, form.Width, form.Height);
-            var scissorRectangle = new SharpDX.Rectangle(0, 0, form.Width, form.Height);
             var pipelineSettings = new PipelineSettings
             {
                 frameCount = 2,
-                width = form.Width,
-                height = form.Height,
+                width = form.ClientSize.Width,
+                height = form.ClientSize.Height,
                 formHandle = form.Handle
             };
             var pipeline = LoadPipeline(pipelineSettings);
             var pipelineAssets = LoadAssets(pipeline);
+            var viewport = new SharpDX.ViewportF(0, 0, pipelineSettings.width, pipelineSettings.height);
+            var scissorRectangle = new SharpDX.Rectangle(0, 0, pipelineSettings.width, pipelineSettings.height);
 
-            // form.Shown += (object sender, System.EventArgs e) =>
-            // {
-            //     while (true)
-            //     {
-            //         Render(pipelineAssets, viewport, scissorRectangle);
-            //     }
-            // };
-            // System.Windows.Forms.Application.Run(form);
-
-            form.ResizeEnd += (object sender, System.EventArgs e) =>
+            form.SizeChanged += (object sender, System.EventArgs e) =>
             {
                 WaitForGpu(pipelineAssets);
-                pipelineSettings.width = form.Width;
-                pipelineSettings.height = form.Height;
-                viewport = new SharpDX.ViewportF(0, 0, form.Width, form.Height);
-                scissorRectangle = new SharpDX.Rectangle(0, 0, form.Width, form.Height);
-                // TODO: release references
-                pipeline.swapChain3.ResizeBuffers(pipelineSettings.frameCount, form.Width, form.Height, SharpDX.DXGI.Format.R8G8B8A8_UNorm, SharpDX.DXGI.SwapChainFlags.AllowModeSwitch);
+                pipelineSettings.width = form.ClientSize.Width;
+                pipelineSettings.height = form.ClientSize.Height;
+                viewport = new SharpDX.ViewportF(0, 0, pipelineSettings.width, pipelineSettings.height);
+                scissorRectangle = new SharpDX.Rectangle(0, 0, pipelineSettings.width, pipelineSettings.height);
+                foreach (var renderTarget in pipeline.renderTargets)
+                {
+                    renderTarget.Dispose();
+                }
+                pipeline.swapChain3.ResizeBuffers(pipelineSettings.frameCount, pipelineSettings.width, pipelineSettings.height, SharpDX.DXGI.Format.R8G8B8A8_UNorm, SharpDX.DXGI.SwapChainFlags.AllowModeSwitch);
+                pipeline.frameIndex = pipeline.swapChain3.CurrentBackBufferIndex;
+                var rtvHandle = pipeline.renderTargetViewHeap.CPUDescriptorHandleForHeapStart;
+                for (int i = 0; i < pipelineSettings.frameCount; i++)
+                {
+                    pipeline.renderTargets[i] = pipeline.swapChain3.GetBackBuffer<SharpDX.Direct3D12.Resource>(i);
+                    pipeline.device.CreateRenderTargetView(pipeline.renderTargets[i], null, rtvHandle);
+                    rtvHandle += pipeline.rtvDescriptorSize;
+                    pipelineAssets.fenceValues[i] = pipelineAssets.fenceValues[pipeline.frameIndex];
+                }
             };
 
-            form.Show();
-            while (!form.IsDisposed)
+            form.Paint += (object sender, System.Windows.Forms.PaintEventArgs e) =>
             {
-                System.Windows.Forms.Application.DoEvents();
                 Render(pipelineAssets, viewport, scissorRectangle);
-            }
+            };
+
+            System.Windows.Forms.Application.Run(form);
         }
 
         class PipelineSettings
