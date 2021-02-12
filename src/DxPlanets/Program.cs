@@ -15,6 +15,13 @@ namespace DxPlanets
             var form = new Form(600, 400);
             var pipeline = new Pipeline.Pipeline(2, form.GraphicsPanel.ClientSize, form.GraphicsPanel.Handle);
             var pipelineAssets = new Pipeline.PipelineAssets(pipeline);
+            var fpsCounter = new FpsCounter();
+
+            fpsCounter.FpsChanged += (object sender, double fps) =>
+            {
+                form.FpsLabel.Text = fps.ToString("N1") + " fps";
+            };
+            fpsCounter.Initialize();
 
             form.GraphicsPanel.SizeChanged += (object sender, System.EventArgs e) =>
             {
@@ -25,7 +32,9 @@ namespace DxPlanets
             form.GraphicsPanel.Paint += (object sender, System.Windows.Forms.PaintEventArgs e) =>
             {
                 Render(pipeline, pipelineAssets);
+                fpsCounter.OnFrame();
                 pipeline.MoveToNextFrame();
+                form.GraphicsPanel.Invalidate();
             };
 
             System.Windows.Forms.Application.Run(form);
