@@ -13,19 +13,19 @@ namespace DxPlanets
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
 
             var form = new Form(600, 400);
-            var pipeline = new Pipeline.Pipeline(2, form.ClientSize.Width, form.ClientSize.Height, form.Handle);
+            var pipeline = new Pipeline.Pipeline(2, form.GraphicsPanel.ClientSize, form.GraphicsPanel.Handle);
             var pipelineAssets = new Pipeline.PipelineAssets(pipeline);
 
-            form.SizeChanged += (object sender, System.EventArgs e) =>
+            form.GraphicsPanel.SizeChanged += (object sender, System.EventArgs e) =>
             {
                 pipeline.WaitForGpu();
-                pipeline.Resize(form.ClientSize.Width, form.ClientSize.Height);
+                pipeline.Resize(form.GraphicsPanel.ClientSize);
             };
 
-            form.Paint += (object sender, System.Windows.Forms.PaintEventArgs e) =>
+            form.GraphicsPanel.Paint += (object sender, System.Windows.Forms.PaintEventArgs e) =>
             {
-                // Render(pipeline, pipelineAssets);
-                // pipeline.MoveToNextFrame();
+                Render(pipeline, pipelineAssets);
+                pipeline.MoveToNextFrame();
             };
 
             System.Windows.Forms.Application.Run(form);
@@ -33,8 +33,8 @@ namespace DxPlanets
 
         static void PopulateCommandList(Pipeline.Pipeline pipeline, Pipeline.PipelineAssets pipelineAssets)
         {
-            var viewport = new SharpDX.ViewportF(0, 0, pipeline.Width, pipeline.Height);
-            var scissorRectangle = new SharpDX.Rectangle(0, 0, pipeline.Width, pipeline.Height);
+            var viewport = new SharpDX.ViewportF(0, 0, pipeline.Size.Width, pipeline.Size.Height);
+            var scissorRectangle = new SharpDX.Rectangle(0, 0, pipeline.Size.Width, pipeline.Size.Height);
 
             pipeline.CommandAllocators[pipeline.FrameIndex].Reset();
             pipelineAssets.CommandList.Reset(pipeline.CommandAllocators[pipeline.FrameIndex], pipelineAssets.PipelineState);

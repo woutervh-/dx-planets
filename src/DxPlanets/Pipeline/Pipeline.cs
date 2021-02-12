@@ -3,8 +3,7 @@ namespace DxPlanets.Pipeline
     class Pipeline
     {
         public int FrameCount { get; private set; }
-        public int Width { get; private set; }
-        public int Height { get; private set; }
+        public System.Drawing.Size Size { get; private set; }
         public SharpDX.Direct3D12.Device Device { get; private set; }
         public SharpDX.Direct3D12.CommandAllocator[] CommandAllocators { get; private set; }
         public SharpDX.Direct3D12.DescriptorHeap RenderTargetViewHeap { get; private set; }
@@ -17,12 +16,11 @@ namespace DxPlanets.Pipeline
         public int RtvDescriptorSize { get; private set; }
         public int FrameIndex { get; private set; }
 
-        public Pipeline(int frameCount, int width, int height, System.IntPtr formHandle)
+        public Pipeline(int frameCount, System.Drawing.Size size, System.IntPtr windowHandle)
         {
             // Fields
-            this.FrameCount = frameCount;
-            Width = width;
-            Height = height;
+            FrameCount = frameCount;
+            Size = size;
 
             // Pipeline
             var device = new SharpDX.Direct3D12.Device(null, SharpDX.Direct3D.FeatureLevel.Level_12_1);
@@ -31,10 +29,10 @@ namespace DxPlanets.Pipeline
             var swapChainDescription = new SharpDX.DXGI.SwapChainDescription()
             {
                 BufferCount = frameCount,
-                ModeDescription = new SharpDX.DXGI.ModeDescription(width, height, new SharpDX.DXGI.Rational(60, 1), SharpDX.DXGI.Format.R8G8B8A8_UNorm),
+                ModeDescription = new SharpDX.DXGI.ModeDescription(Size.Width, Size.Height, new SharpDX.DXGI.Rational(60, 1), SharpDX.DXGI.Format.R8G8B8A8_UNorm),
                 Usage = SharpDX.DXGI.Usage.RenderTargetOutput,
                 SwapEffect = SharpDX.DXGI.SwapEffect.FlipDiscard,
-                OutputHandle = formHandle,
+                OutputHandle = windowHandle,
                 Flags = SharpDX.DXGI.SwapChainFlags.None,
                 SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
                 IsWindowed = true
@@ -84,15 +82,14 @@ namespace DxPlanets.Pipeline
             FrameIndex = frameIndex;
         }
 
-        public void Resize(int width, int height)
+        public void Resize(System.Drawing.Size size)
         {
-            Width = width;
-            Height = height;
+            Size = size;
             foreach (var renderTarget in RenderTargets)
             {
                 renderTarget.Dispose();
             }
-            SwapChain3.ResizeBuffers(FrameCount, width, height, SharpDX.DXGI.Format.R8G8B8A8_UNorm, SharpDX.DXGI.SwapChainFlags.AllowModeSwitch);
+            SwapChain3.ResizeBuffers(FrameCount, size.Width, size.Height, SharpDX.DXGI.Format.R8G8B8A8_UNorm, SharpDX.DXGI.SwapChainFlags.AllowModeSwitch);
             FrameIndex = SwapChain3.CurrentBackBufferIndex;
             var rtvHandle = RenderTargetViewHeap.CPUDescriptorHandleForHeapStart;
             for (int i = 0; i < FrameCount; i++)
