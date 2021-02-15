@@ -29,39 +29,27 @@ namespace DxPlanets
                 pipeline.Resize(form.GraphicsPanel.ClientSize);
             };
 
-            form.GraphicsPanel.Paint += (object sender, System.Windows.Forms.PaintEventArgs e) =>
+            // System.Windows.Forms.Application.Idle += (object sender, System.EventArgs e) =>
+            // {
+            //     SharpDX.Win32.NativeMessage msg;
+            //     while (PeekMessage(out msg, System.IntPtr.Zero, 0, 0, 0) == 0)
+            //     {
+            //         Render(pipeline, pipelineAssets);
+            //         fpsCounter.OnFrame();
+            //         pipeline.MoveToNextFrame();
+            //     }
+            // };
+
+            form.Show();
+            while (form.Created)
             {
+                System.Windows.Forms.Application.DoEvents();
                 Render(pipeline, pipelineAssets);
                 fpsCounter.OnFrame();
                 pipeline.MoveToNextFrame();
-                form.GraphicsPanel.Invalidate();
-            };
+            }
 
-            System.Windows.Forms.Application.Run(form);
-
-            // form.Show();
-            // SharpDX.Win32.NativeMessage msg;
-            // while (!form.IsDisposed)
-            // {
-            //     while (PeekMessage(out msg, System.IntPtr.Zero, 0, 0, 0) != 0)
-            //     {
-            //         if (GetMessage(out msg, System.IntPtr.Zero, 0, 0) == -1)
-            //         {
-            //             throw new System.InvalidOperationException(System.String.Format(System.Globalization.CultureInfo.InvariantCulture, "An error happened in rendering loop while processing windows messages. Error: {0}", System.Runtime.InteropServices.Marshal.GetLastWin32Error()));
-            //         }
-
-            //         var message = new System.Windows.Forms.Message() { HWnd = msg.handle, LParam = msg.lParam, Msg = (int)msg.msg, WParam = msg.wParam };
-            //         if (!System.Windows.Forms.Application.FilterMessage(ref message))
-            //         {
-            //             TranslateMessage(ref msg);
-            //             DispatchMessage(ref msg);
-            //         }
-            //     }
-
-            //     Render(pipeline, pipelineAssets);
-            //     fpsCounter.OnFrame();
-            //     pipeline.MoveToNextFrame();
-            // }
+            // System.Windows.Forms.Application.Run(form);
         }
 
         static void PopulateCommandList(Pipeline.Pipeline pipeline, Pipeline.PipelineAssets pipelineAssets)
