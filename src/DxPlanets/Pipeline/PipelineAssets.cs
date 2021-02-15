@@ -6,10 +6,25 @@ namespace DxPlanets.Pipeline
         public SharpDX.Direct3D12.PipelineState PipelineState { get; private set; }
         public SharpDX.Direct3D12.RootSignature RootSignature { get; private set; }
         public SharpDX.Direct3D12.VertexBufferView VertexBufferView { get; private set; }
+        public SharpDX.Direct3D12.DescriptorHeap ConstantBufferViewHeap { get; private set; }
+        public System.IntPtr ConstantBufferPointer { get; private set; }
 
         public PipelineAssets(Pipeline pipeline)
         {
-            var rootSignatureDescription = new SharpDX.Direct3D12.RootSignatureDescription(SharpDX.Direct3D12.RootSignatureFlags.AllowInputAssemblerInputLayout);
+            var rootSignatureParameters = new SharpDX.Direct3D12.RootParameter[]
+            {
+                new SharpDX.Direct3D12.RootParameter(
+                    SharpDX.Direct3D12.ShaderVisibility.Vertex,
+                    new SharpDX.Direct3D12.DescriptorRange()
+                    {
+                        RangeType = SharpDX.Direct3D12.DescriptorRangeType.ConstantBufferView,
+                        BaseShaderRegister = 0,
+                        OffsetInDescriptorsFromTableStart = int.MinValue,
+                        DescriptorCount = 1
+                    }
+                )
+            };
+            var rootSignatureDescription = new SharpDX.Direct3D12.RootSignatureDescription(SharpDX.Direct3D12.RootSignatureFlags.AllowInputAssemblerInputLayout, rootSignatureParameters);
             var rootSignature = pipeline.Device.CreateRootSignature(rootSignatureDescription.Serialize());
 
             var vertexShader = new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile("src/Shaders/FlatColor.hlsl", "VSMain", "vs_5_0"));
@@ -39,8 +54,25 @@ namespace DxPlanets.Pipeline
             pipelineStateObjectDescription.RenderTargetFormats[0] = SharpDX.DXGI.Format.R8G8B8A8_UNorm;
             var pipelineState = pipeline.Device.CreateGraphicsPipelineState(pipelineStateObjectDescription);
 
+            var cbvHeapDescription = new SharpDX.Direct3D12.DescriptorHeapDescription()
+            {
+                DescriptorCount = 1,
+                Flags = SharpDX.Direct3D12.DescriptorHeapFlags.ShaderVisible,
+                Type = SharpDX.Direct3D12.DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView
+            };
+            var constantBufferViewHeap = pipeline.Device.CreateDescriptorHeap(cbvHeapDescription);
+
             var commandList = pipeline.Device.CreateCommandList(SharpDX.Direct3D12.CommandListType.Direct, pipeline.CommandAllocators[pipeline.FrameIndex], pipelineState);
             commandList.Close();
+
+            var constantBuffer = pipeline.Device.CreateCommittedResource(new SharpDX.Direct3D12.HeapProperties(SharpDX.Direct3D12.HeapType.Upload), SharpDX.Direct3D12.HeapFlags.None, SharpDX.Direct3D12.ResourceDescription.Buffer(1024 * 64), SharpDX.Direct3D12.ResourceStates.GenericRead);
+            var cbvDescription = new SharpDX.Direct3D12.ConstantBufferViewDescription()
+            {
+                BufferLocation = constantBuffer.GPUVirtualAddress,
+                SizeInBytes = (SharpDX.Utilities.SizeOf<ConstantBuffer>() + 255) & ~255
+            };
+            pipeline.Device.CreateConstantBufferView(cbvDescription, constantBufferViewHeap.CPUDescriptorHandleForHeapStart);
+            var constantBufferPointer = constantBuffer.Map(0);
 
             var triangleVertices = new[]
             {
@@ -62,12 +94,19 @@ namespace DxPlanets.Pipeline
             PipelineState = pipelineState;
             RootSignature = rootSignature;
             VertexBufferView = vertexBufferView;
+            ConstantBufferViewHeap = constantBufferViewHeap;
+            ConstantBufferPointer = constantBufferPointer;
         }
 
-        struct Vertex
+        public struct Vertex
         {
             public SharpDX.Vector3 Position;
             public SharpDX.Vector4 Color;
+        };
+
+        public struct ConstantBuffer
+        {
+            public SharpDX.Matrix viewMatrix;
         };
     }
 }

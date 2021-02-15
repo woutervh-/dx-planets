@@ -2,6 +2,11 @@ namespace DxPlanets
 {
     class Game
     {
+        static Pipeline.PipelineAssets.ConstantBuffer constantBufferData = new Pipeline.PipelineAssets.ConstantBuffer()
+        {
+            viewMatrix = SharpDX.Matrix.Identity
+        };
+
         static void PopulateCommandList(Pipeline.Pipeline pipeline, Pipeline.PipelineAssets pipelineAssets)
         {
             var viewport = new SharpDX.ViewportF(0, 0, pipeline.Size.Width, pipeline.Size.Height);
@@ -9,7 +14,11 @@ namespace DxPlanets
 
             pipeline.CommandAllocators[pipeline.FrameIndex].Reset();
             pipelineAssets.CommandList.Reset(pipeline.CommandAllocators[pipeline.FrameIndex], pipelineAssets.PipelineState);
+
             pipelineAssets.CommandList.SetGraphicsRootSignature(pipelineAssets.RootSignature);
+            pipelineAssets.CommandList.SetDescriptorHeaps(1, new SharpDX.Direct3D12.DescriptorHeap[] { pipelineAssets.ConstantBufferViewHeap });
+            pipelineAssets.CommandList.SetGraphicsRootDescriptorTable(0, pipelineAssets.ConstantBufferViewHeap.GPUDescriptorHandleForHeapStart);
+
             pipelineAssets.CommandList.SetViewport(viewport);
             pipelineAssets.CommandList.SetScissorRectangles(scissorRectangle);
             pipelineAssets.CommandList.ResourceBarrierTransition(pipeline.RenderTargets[pipeline.FrameIndex], SharpDX.Direct3D12.ResourceStates.Present, SharpDX.Direct3D12.ResourceStates.RenderTarget);
@@ -33,10 +42,13 @@ namespace DxPlanets
             pipeline.MoveToNextFrame();
         }
 
-        public void Update(System.TimeSpan total, System.TimeSpan delta)
+        public void Update(Pipeline.Pipeline pipeline, Pipeline.PipelineAssets pipelineAssets, System.TimeSpan total, System.TimeSpan delta)
         {
-            System.Diagnostics.Trace.WriteLine(total);
-            System.Diagnostics.Trace.WriteLine(delta);
+            System.Diagnostics.Trace.WriteLine(total.TotalSeconds);
+            // var translation = new SharpDX.Vector3(0f, 0f, (float)total.TotalSeconds);
+            // SharpDX.Matrix.Translation(ref translation, out constantBufferData.viewMatrix);
+            SharpDX.Matrix.RotationY((float)total.TotalSeconds, out constantBufferData.viewMatrix);
+            SharpDX.Utilities.Write(pipelineAssets.ConstantBufferPointer, ref constantBufferData);
         }
     }
 }

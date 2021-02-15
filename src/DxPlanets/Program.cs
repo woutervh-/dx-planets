@@ -33,16 +33,17 @@ namespace DxPlanets
             var game = new Game();
             var start = System.Diagnostics.Stopwatch.GetTimestamp();
             var last = start;
-            System.Diagnostics.Trace.WriteLine(System.Diagnostics.Stopwatch.Frequency);
             while (form.Created)
             {
                 System.Windows.Forms.Application.DoEvents();
+                fpsCounter.OnFrame();
+
                 var now = System.Diagnostics.Stopwatch.GetTimestamp();
-                var total = System.TimeSpan.FromTicks(now - start);;
-                var delta = System.TimeSpan.FromTicks(now - last);;
+                var total = System.TimeSpan.FromTicks(now - start);
+                var delta = System.TimeSpan.FromTicks(now - last);
                 last = now;
 
-                game.Update(total, delta);
+                game.Update(pipeline, pipelineAssets, total, delta);
                 game.Render(pipeline, pipelineAssets);
                 pipeline.MoveToNextFrame();
             }
