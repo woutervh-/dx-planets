@@ -1,5 +1,5 @@
 cbuffer Constants : register(b0) {
-	float4x4 viewMatrix;
+	float4x4 worldViewProjectionMatrix;
 };
 
 struct PSInput {
@@ -10,8 +10,7 @@ struct PSInput {
 PSInput VSMain(float4 position : POSITION, float4 color : COLOR) {
 	PSInput result;
 
-	result.position = mul(viewMatrix, position);
-	result.position.z = 0;
+	result.position = mul(worldViewProjectionMatrix, position);
 	result.color = color;
 
 	return result;

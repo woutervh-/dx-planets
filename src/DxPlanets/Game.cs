@@ -4,7 +4,7 @@ namespace DxPlanets
     {
         static Pipeline.PipelineAssets.ConstantBuffer constantBufferData = new Pipeline.PipelineAssets.ConstantBuffer()
         {
-            viewMatrix = SharpDX.Matrix.Identity
+            viewProjectionMatrix = SharpDX.Matrix.Identity
         };
 
         static void PopulateCommandList(Pipeline.Pipeline pipeline, Pipeline.PipelineAssets pipelineAssets)
@@ -44,10 +44,16 @@ namespace DxPlanets
 
         public void Update(Pipeline.Pipeline pipeline, Pipeline.PipelineAssets pipelineAssets, System.TimeSpan total, System.TimeSpan delta)
         {
-            System.Diagnostics.Trace.WriteLine(total.TotalSeconds);
+            // System.Diagnostics.Trace.WriteLine(total.TotalSeconds);
             // var translation = new SharpDX.Vector3(0f, 0f, (float)total.TotalSeconds);
             // SharpDX.Matrix.Translation(ref translation, out constantBufferData.viewMatrix);
-            SharpDX.Matrix.RotationY((float)total.TotalSeconds, out constantBufferData.viewMatrix);
+            SharpDX.Matrix worldMatrix;
+            SharpDX.Matrix viewMatrix;
+            SharpDX.Matrix projectionMatrix;
+            worldMatrix = SharpDX.Matrix.RotationY((float)total.TotalSeconds);
+            viewMatrix = SharpDX.Matrix.LookAtLH(new SharpDX.Vector3(0f, 0f, -5f), SharpDX.Vector3.Zero, SharpDX.Vector3.Up);
+            projectionMatrix = SharpDX.Matrix.OrthoOffCenterLH(-1f, 1f, -1f, 1f, 0f, 100f);
+            constantBufferData.viewProjectionMatrix = worldMatrix * viewMatrix * projectionMatrix;
             SharpDX.Utilities.Write(pipelineAssets.ConstantBufferPointer, ref constantBufferData);
         }
     }

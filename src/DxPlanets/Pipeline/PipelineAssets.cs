@@ -106,7 +106,7 @@ namespace DxPlanets.Pipeline
 
         public struct ConstantBuffer
         {
-            public SharpDX.Matrix viewMatrix;
+            public SharpDX.Matrix viewProjectionMatrix;
         };
     }
 }
