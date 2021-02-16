@@ -6,6 +6,8 @@
     <title>In-game browser</title>
     <style>
         body {
+            padding: 0;
+            margin: 0;
             font-family: tahoma, sans-serif;
             color: #f2f2f2;
             background-color: #1e2429;
@@ -20,6 +22,39 @@
             border-top-color: #3E67EC;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+        }
+
+        .divider {
+            margin: 6px;
+            width: calc(100% - 12px);
+            height: 1px;
+            background-color: #262626;
+        }
+
+        .projection-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto;
+            grid-template-areas:
+                "label label"
+                "orthographic perspective";
+            column-gap: 16px;
+        }
+
+        .projection-grid-label {
+            grid-area: label;
+        }
+
+        .projection-grid-orthographic {
+            display: grid;
+            grid-template-columns: auto auto;
+            grid-area: orthographic;
+        }
+
+        .projection-grid-perspective {
+            display: grid;
+            grid-template-columns: auto auto;
+            grid-area: perspective;
         }
 
         @keyframes spin {
@@ -64,6 +99,18 @@
                 return (
                     <React.Fragment>
                         <div>FPS: {this.state.fps}</div>
+                        <div className="divider" />
+                        <div className="projection-grid">
+                            <div className="projection-grid-label">Projection:</div>
+                            <div className="projection-grid-orthographic">
+                                <input type="radio" name="projection" id="projection-orthographic" value="orthographic" />
+                                <label for="projection-orthographic">Orthographic</label>
+                            </div>
+                            <div className="projection-grid-perspective">
+                                <input type="radio" name="projection" id="projection-perspective" value="perspective" />
+                                <label for="projection-perspective">Perspective</label>
+                            </div>
+                        </div>
                     </React.Fragment>
                 );
             }
