@@ -19,7 +19,22 @@ namespace DxPlanets
 
             fpsCounter.FpsChanged += (object sender, double fps) =>
             {
-                form.FpsLabel.Text = fps.ToString("N1") + " fps";
+                if (form.WebView.CoreWebView2 != null)
+                {
+                    using (var stream = new System.IO.MemoryStream())
+                    {
+                        using (var writer = new System.Text.Json.Utf8JsonWriter(stream))
+                        {
+                            writer.WriteStartObject();
+                            writer.WriteString("type", "fps");
+                            writer.WriteNumber("fps", fps);
+                            writer.WriteEndObject();
+                        }
+
+                        string json = System.Text.Encoding.UTF8.GetString(stream.ToArray());
+                        form.WebView.CoreWebView2.PostWebMessageAsJson(json);
+                    }
+                }
             };
             fpsCounter.Initialize();
 

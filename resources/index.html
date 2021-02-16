@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang=en>
+
+<head>
+    <meta charset=utf-8 />
+    <title>In-game browser</title>
+    <style>
+        body {
+            font-family: tahoma, sans-serif;
+            color: #f2f2f2;
+            background-color: #1e2429;
+        }
+
+        .spinner {
+            pointer-events: none;
+            width: 1em;
+            height: 1em;
+            border: 0.2em solid transparent;
+            border-color: #eee;
+            border-top-color: #3E67EC;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg)
+            }
+        }
+    </style>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+</head>
+
+<body>
+    <div id="app">
+    </div>
+    <script type="text/babel">
+        class App extends React.PureComponent {
+            state = {
+                fps: null
+            };
+
+            componentDidMount() {
+                window.chrome.webview.addEventListener('message', this.handleMessage);
+            }
+
+            componentWillUnmount() {
+                window.chrome.webview.removeEventListener('message', this.handleMessage);
+            }
+
+            handleMessage = (event) => {
+                switch (event.data.type) {
+                    case 'fps': this.handleFps(event); break;
+                }
+            };
+
+            handleFps = (event) => {
+                this.setState({ fps: event.data.fps });
+            };
+
+            render() {
+                return (
+                    <React.Fragment>
+                        <div>FPS: {this.state.fps}</div>
+                    </React.Fragment>
+                );
+            }
+        }
+
+        ReactDOM.render(
+            <App />,
+            document.getElementById('app')
+        );
+    </script>
+</body>
+
+</html>
