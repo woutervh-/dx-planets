@@ -1,6 +1,6 @@
 ﻿namespace DxPlanets
 {
-    public partial class Form : System.Windows.Forms.Form
+    partial class Form : System.Windows.Forms.Form
     {
         private System.ComponentModel.IContainer components = null;
         public Microsoft.Web.WebView2.WinForms.WebView2 WebView { get; private set; }
