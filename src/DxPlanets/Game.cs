@@ -2,6 +2,8 @@ namespace DxPlanets
 {
     class Game
     {
+        public UI.UIState State;
+
         static Pipeline.PipelineAssets.ConstantBuffer constantBufferData = new Pipeline.PipelineAssets.ConstantBuffer()
         {
             viewProjectionMatrix = SharpDX.Matrix.Identity
@@ -52,7 +54,18 @@ namespace DxPlanets
             SharpDX.Matrix projectionMatrix;
             worldMatrix = SharpDX.Matrix.RotationY((float)total.TotalSeconds);
             viewMatrix = SharpDX.Matrix.LookAtLH(new SharpDX.Vector3(0f, 0f, -5f), SharpDX.Vector3.Zero, SharpDX.Vector3.Up);
-            projectionMatrix = SharpDX.Matrix.OrthoOffCenterLH(-1f, 1f, -1f, 1f, 0f, 100f);
+
+            if (State.Projection == UI.UIState.ProjectionType.Orthographic)
+            {
+                projectionMatrix = SharpDX.Matrix.OrthoOffCenterLH(-1f, 1f, -1f, 1f, 0f, 100f);
+            }
+            else
+            {
+                var fov = (float)System.Math.PI / 3f;
+                var aspect = (float)pipeline.Size.Width / pipeline.Size.Height;
+                projectionMatrix = SharpDX.Matrix.PerspectiveFovLH(fov, aspect, 0.1f, 100f);
+            }
+
             constantBufferData.viewProjectionMatrix = worldMatrix * viewMatrix * projectionMatrix;
             SharpDX.Utilities.Write(pipelineAssets.ConstantBufferPointer, ref constantBufferData);
         }

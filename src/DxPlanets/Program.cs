@@ -16,27 +16,17 @@ namespace DxPlanets
             var pipeline = new Pipeline.Pipeline(2, form.GraphicsPanel.ClientSize, form.GraphicsPanel.Handle);
             var pipelineAssets = new Pipeline.PipelineAssets(pipeline);
             var fpsCounter = new FpsCounter();
+            var bridge = new UI.Bridge();
+
+            form.WebView.CoreWebView2InitializationCompleted += (object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e) =>
+            {
+                bridge.SetCoreWebView2(form.WebView.CoreWebView2);
+            };
 
             fpsCounter.FpsChanged += (object sender, double fps) =>
             {
-                if (form.WebView.CoreWebView2 != null)
-                {
-                    using (var stream = new System.IO.MemoryStream())
-                    {
-                        using (var writer = new System.Text.Json.Utf8JsonWriter(stream))
-                        {
-                            writer.WriteStartObject();
-                            writer.WriteString("type", "fps");
-                            writer.WriteNumber("fps", fps);
-                            writer.WriteEndObject();
-                        }
-
-                        string json = System.Text.Encoding.UTF8.GetString(stream.ToArray());
-                        form.WebView.CoreWebView2.PostWebMessageAsJson(json);
-                    }
-                }
+                bridge.State.Fps = fps;
             };
-            fpsCounter.Initialize();
 
             form.GraphicsPanel.SizeChanged += (object sender, System.EventArgs e) =>
             {
@@ -45,12 +35,12 @@ namespace DxPlanets
             };
 
             form.Show();
-            var game = new Game();
+            fpsCounter.Initialize();
+            var game = new Game() { State = bridge.State };
             var start = System.Diagnostics.Stopwatch.GetTimestamp();
             var last = start;
             while (form.Created)
             {
-                System.Windows.Forms.Application.DoEvents();
                 fpsCounter.OnFrame();
 
                 var now = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -61,6 +51,8 @@ namespace DxPlanets
                 game.Update(pipeline, pipelineAssets, total, delta);
                 game.Render(pipeline, pipelineAssets);
                 pipeline.MoveToNextFrame();
+
+                System.Windows.Forms.Application.DoEvents();
             }
         }
     }

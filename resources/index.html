@@ -13,6 +13,17 @@
             background-color: #1e2429;
         }
 
+        .full-size {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .center {
+            display: grid;
+            align-items: center;
+            justify-items: center;
+        }
+
         .spinner {
             pointer-events: none;
             width: 1em;
@@ -73,9 +84,7 @@
     </div>
     <script type="text/babel">
         class App extends React.PureComponent {
-            state = {
-                fps: null
-            };
+            state = null;
 
             componentDidMount() {
                 window.chrome.webview.addEventListener('message', this.handleMessage);
@@ -86,16 +95,31 @@
             }
 
             handleMessage = (event) => {
+                console.log(event);
                 switch (event.data.type) {
-                    case 'fps': this.handleFps(event); break;
+                    case 'state': this.handleState(event); break;
                 }
             };
 
-            handleFps = (event) => {
-                this.setState({ fps: event.data.fps });
+            handleState = (event) => {
+                this.setState(event.data.state);
+            };
+
+            handleProjectionChange = (event) => {
+                window.chrome.webview.postMessage({ projection: event.target.value });
             };
 
             render() {
+                if (!this.state) {
+                    return (
+                        <div className="full-size center">
+                            <div className="spinner" />
+                        </div>
+                    );
+                }
+
+                console.log(this.state);
+
                 return (
                     <React.Fragment>
                         <div>FPS: {this.state.fps}</div>
@@ -103,12 +127,12 @@
                         <div className="projection-grid">
                             <div className="projection-grid-label">Projection:</div>
                             <div className="projection-grid-orthographic">
-                                <input type="radio" name="projection" id="projection-orthographic" value="orthographic" />
-                                <label for="projection-orthographic">Orthographic</label>
+                                <input type="radio" name="projection" id="projection-orthographic" value="orthographic" checked={this.state.projection === 'orthographic'} onChange={this.handleProjectionChange} />
+                                <label htmlFor="projection-orthographic">Orthographic</label>
                             </div>
                             <div className="projection-grid-perspective">
-                                <input type="radio" name="projection" id="projection-perspective" value="perspective" />
-                                <label for="projection-perspective">Perspective</label>
+                                <input type="radio" name="projection" id="projection-perspective" value="perspective" checked={this.state.projection === 'perspective'} onChange={this.handleProjectionChange} />
+                                <label htmlFor="projection-perspective">Perspective</label>
                             </div>
                         </div>
                     </React.Fragment>
