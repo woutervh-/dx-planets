@@ -16,16 +16,12 @@ namespace DxPlanets
             var pipeline = new Pipeline.Pipeline(2, form.GraphicsPanel.ClientSize, form.GraphicsPanel.Handle);
             var pipelineAssets = new Pipeline.PipelineAssets(pipeline);
             var fpsCounter = new FpsCounter();
-            var bridge = new UI.Bridge();
+            var game = new Game.Game();
+            var bridge = new UI.Bridge(game, fpsCounter);
 
             form.WebView.CoreWebView2InitializationCompleted += (object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e) =>
             {
                 bridge.SetCoreWebView2(form.WebView.CoreWebView2);
-            };
-
-            fpsCounter.FpsChanged += (object sender, double fps) =>
-            {
-                bridge.State.Fps = fps;
             };
 
             form.GraphicsPanel.SizeChanged += (object sender, System.EventArgs e) =>
@@ -36,7 +32,6 @@ namespace DxPlanets
 
             form.Show();
             fpsCounter.Initialize();
-            var game = new Game() { State = bridge.State };
             var start = System.Diagnostics.Stopwatch.GetTimestamp();
             var last = start;
             while (form.Created)

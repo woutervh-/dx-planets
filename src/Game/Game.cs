@@ -1,8 +1,8 @@
-namespace DxPlanets
+namespace DxPlanets.Game
 {
     class Game
     {
-        public UI.UIState State;
+        public Settings.GraphicsSettings GraphicsSettings = new Settings.GraphicsSettings();
 
         static Pipeline.PipelineAssets.ConstantBuffer constantBufferData = new Pipeline.PipelineAssets.ConstantBuffer()
         {
@@ -55,7 +55,7 @@ namespace DxPlanets
             worldMatrix = SharpDX.Matrix.RotationY((float)total.TotalSeconds);
             viewMatrix = SharpDX.Matrix.LookAtLH(new SharpDX.Vector3(0f, 0f, -5f), SharpDX.Vector3.Zero, SharpDX.Vector3.Up);
 
-            if (State.Projection == UI.UIState.ProjectionType.Orthographic)
+            if (GraphicsSettings.Projection.Value == Settings.GraphicsSettings.ProjectionSetting.ORTHOGRAPHIC)
             {
                 projectionMatrix = SharpDX.Matrix.OrthoOffCenterLH(-1f, 1f, -1f, 1f, 0f, 100f);
             }

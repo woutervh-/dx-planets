@@ -3,17 +3,12 @@ namespace DxPlanets
     class FpsCounter
     {
         private System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-        public event FpsEventHandler FpsChanged;
         private int frameCount = 0;
 
-        public delegate void FpsEventHandler(object sender, double fps);
+        public System.Reactive.Subjects.BehaviorSubject<double> Fps = new System.Reactive.Subjects.BehaviorSubject<double>(0.0);
 
         public void Initialize()
         {
-            if (FpsChanged != null)
-            {
-                FpsChanged(null, 0.0);
-            }
             stopwatch.Start();
         }
 
@@ -24,10 +19,7 @@ namespace DxPlanets
             if (elapsedTime >= 1f)
             {
                 var fps = (double)frameCount / elapsedTime;
-                if (FpsChanged != null)
-                {
-                    FpsChanged(this, fps);
-                }
+                Fps.OnNext(fps);
                 frameCount = 0;
                 stopwatch.Restart();
             }

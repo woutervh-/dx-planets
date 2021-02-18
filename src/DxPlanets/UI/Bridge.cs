@@ -2,8 +2,17 @@ namespace DxPlanets.UI
 {
     class Bridge
     {
-        public UIState State { get; private set; } = new UIState();
+        public State State { get; private set; }
         private Microsoft.Web.WebView2.Core.CoreWebView2 coreWebView2 = null;
+
+        public Bridge(Game.Game game, FpsCounter fpsCounter)
+        {
+            State = new State
+            {
+                Projection = game.GraphicsSettings.Projection,
+                Fps = fpsCounter.Fps
+            };
+        }
 
         public void SetCoreWebView2(Microsoft.Web.WebView2.Core.CoreWebView2 coreWebView2)
         {
@@ -18,14 +27,8 @@ namespace DxPlanets.UI
 
         private void registerOutgoingEvents()
         {
-            State.FpsChanged += (object sender, System.EventArgs e) =>
-            {
-                sendState("fps", State.Fps);
-            };
-            State.ProjectionChanged += (object sender, System.EventArgs e) =>
-            {
-                sendState("projection", State.Projection.Value);
-            };
+            System.ObservableExtensions.Subscribe(State.Fps, (fps) => sendState("fps", fps));
+            System.ObservableExtensions.Subscribe(State.Projection, (projection) => sendState("projection", BridgeHelper.ProjectionToString(projection)));
         }
 
         private void registerIncomingEvents()
@@ -40,14 +43,10 @@ namespace DxPlanets.UI
                 var bytes = System.Text.Encoding.UTF8.GetBytes(e.WebMessageAsJson);
                 var document = System.Text.Json.JsonDocument.Parse(bytes);
 
-                var projection = document.RootElement.GetProperty("projection").GetString();
-                if (projection == "orthographic")
+                var projection = BridgeHelper.ProjectionFromString(document.RootElement.GetProperty("projection").GetString());
+                if (projection.HasValue)
                 {
-                    State.Projection = UIState.ProjectionType.Orthographic;
-                }
-                else if (projection == "perspective")
-                {
-                    State.Projection = UIState.ProjectionType.Perspective;
+                    State.Projection.OnNext(projection.Value);
                 }
             };
         }
@@ -56,8 +55,8 @@ namespace DxPlanets.UI
         {
             var fullState = new System.Collections.Generic.Dictionary<string, object>
             {
-                { "fps", State.Fps },
-                { "projection", State.Projection.Value }
+                { "fps", State.Fps.Value },
+                { "projection", BridgeHelper.ProjectionToString(State.Projection.Value) }
             };
             sendState(fullState);
         }
