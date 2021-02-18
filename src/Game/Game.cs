@@ -61,7 +61,7 @@ namespace DxPlanets.Game
             {
                 var fov = (float)System.Math.PI / 3f;
                 var aspect = (float)pipeline.Size.Width / pipeline.Size.Height;
-                projectionMatrix = SharpDX.Matrix.PerspectiveFovLH(fov, aspect, 0.1f, 100f);
+                projectionMatrix = SharpDX.Matrix.PerspectiveFovLH(fov, aspect, 0f, 100f);
             }
 
             constantBufferData.viewProjectionMatrix = worldMatrix * viewMatrix * projectionMatrix;

@@ -13,9 +13,13 @@
             ClientSize = new System.Drawing.Size(width, height);
             Text = "Form1";
 
-            GraphicsPanel = new System.Windows.Forms.Panel();
+            GraphicsPanel = new FocusablePanel();
             GraphicsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             GraphicsPanel.BackColor = System.Drawing.Color.Black;
+            GraphicsPanel.KeyDown += (object sender, System.Windows.Forms.KeyEventArgs e) =>
+            {
+                System.Diagnostics.Trace.WriteLine(e);
+            };
             Controls.Add(GraphicsPanel);
 
             var uiPanel = new System.Windows.Forms.TableLayoutPanel();

@@ -16,6 +16,14 @@
             background-color: #1e2429;
         }
 
+        kbd {
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            padding: 2px 5px;
+            color: #f2f2f2;
+            background-color: #29292d;
+        }
+
         .full-size {
             width: 100vw;
             height: 100vh;
@@ -61,14 +69,23 @@
 
         .projection-grid-orthographic {
             display: grid;
-            grid-template-columns: auto auto;
+            grid-template-columns: max-content auto;
             grid-area: orthographic;
+            align-items: center;
         }
 
         .projection-grid-perspective {
             display: grid;
-            grid-template-columns: auto auto;
+            grid-template-columns: max-content auto;
             grid-area: perspective;
+            align-items: center;
+        }
+
+        .clear-color-grid {
+            align-items: center;
+            display: grid;
+            grid-template-columns: max-content auto;
+            column-gap: 4px;
         }
 
         @keyframes spin {
@@ -140,9 +157,18 @@
                             </div>
                         </div>
                         <div className="divider" />
-                        <div>
+                        <div className="clear-color-grid">
                             <input type="color" id="clear-color" value={this.state.clearColor} onChange={this.handleClearColorChange} />
                             <label htmlFor="clear-color">Clear color</label>
+                        </div>
+                        <div className="divider" />
+                        <div>
+                            <kbd>q</kbd>
+                            <kbd>w</kbd>
+                            <kbd>e</kbd>
+                            <kbd>r</kbd>
+                            <kbd>t</kbd>
+                            <kbd>y</kbd>
                         </div>
                     </React.Fragment>
                 );
