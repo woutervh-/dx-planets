@@ -46,12 +46,10 @@ namespace DxPlanets.Game
 
         public void Update(Pipeline.Pipeline pipeline, Pipeline.PipelineAssets pipelineAssets, System.TimeSpan total, System.TimeSpan delta)
         {
-            // System.Diagnostics.Trace.WriteLine(total.TotalSeconds);
-            // var translation = new SharpDX.Vector3(0f, 0f, (float)total.TotalSeconds);
-            // SharpDX.Matrix.Translation(ref translation, out constantBufferData.viewMatrix);
             SharpDX.Matrix worldMatrix;
             SharpDX.Matrix viewMatrix;
             SharpDX.Matrix projectionMatrix;
+
             worldMatrix = SharpDX.Matrix.RotationY((float)total.TotalSeconds);
             viewMatrix = SharpDX.Matrix.LookAtLH(new SharpDX.Vector3(0f, 0f, -5f), SharpDX.Vector3.Zero, SharpDX.Vector3.Up);
 
