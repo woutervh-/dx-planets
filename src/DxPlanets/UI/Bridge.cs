@@ -10,7 +10,8 @@ namespace DxPlanets.UI
             State = new State
             {
                 Projection = game.GraphicsSettings.Projection,
-                Fps = fpsCounter.Fps
+                Fps = fpsCounter.Fps,
+                ClearColor = game.GraphicsSettings.ClearColor
             };
         }
 
@@ -29,6 +30,7 @@ namespace DxPlanets.UI
         {
             System.ObservableExtensions.Subscribe(State.Fps, (fps) => sendState("fps", fps));
             System.ObservableExtensions.Subscribe(State.Projection, (projection) => sendState("projection", BridgeHelper.ProjectionToString(projection)));
+            System.ObservableExtensions.Subscribe(State.ClearColor, (clearColor) => sendState("clearColor", BridgeHelper.ColorToString(clearColor)));
         }
 
         private void registerIncomingEvents()
@@ -43,10 +45,16 @@ namespace DxPlanets.UI
                 var bytes = System.Text.Encoding.UTF8.GetBytes(e.WebMessageAsJson);
                 var document = System.Text.Json.JsonDocument.Parse(bytes);
 
-                var projection = BridgeHelper.ProjectionFromString(document.RootElement.GetProperty("projection").GetString());
-                if (projection.HasValue)
+                System.Text.Json.JsonElement projection;
+                if (document.RootElement.TryGetProperty("projection", out projection))
                 {
-                    State.Projection.OnNext(projection.Value);
+                    State.Projection.OnNext(BridgeHelper.ProjectionFromString(projection.GetString()));
+                }
+
+                System.Text.Json.JsonElement clearColor;
+                if (document.RootElement.TryGetProperty("clearColor", out clearColor))
+                {
+                    State.ClearColor.OnNext(BridgeHelper.ColorFromString(clearColor.GetString()));
                 }
             };
         }
@@ -56,7 +64,8 @@ namespace DxPlanets.UI
             var fullState = new System.Collections.Generic.Dictionary<string, object>
             {
                 { "fps", State.Fps.Value },
-                { "projection", BridgeHelper.ProjectionToString(State.Projection.Value) }
+                { "projection", BridgeHelper.ProjectionToString(State.Projection.Value) },
+                { "clearColor", BridgeHelper.ColorToString(State.ClearColor.Value) }
             };
             sendState(fullState);
         }

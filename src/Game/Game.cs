@@ -4,12 +4,12 @@ namespace DxPlanets.Game
     {
         public Settings.GraphicsSettings GraphicsSettings = new Settings.GraphicsSettings();
 
-        static Pipeline.PipelineAssets.ConstantBuffer constantBufferData = new Pipeline.PipelineAssets.ConstantBuffer()
+        Pipeline.PipelineAssets.ConstantBuffer constantBufferData = new Pipeline.PipelineAssets.ConstantBuffer()
         {
             viewProjectionMatrix = SharpDX.Matrix.Identity
         };
 
-        static void PopulateCommandList(Pipeline.Pipeline pipeline, Pipeline.PipelineAssets pipelineAssets)
+        void PopulateCommandList(Pipeline.Pipeline pipeline, Pipeline.PipelineAssets pipelineAssets)
         {
             var viewport = new SharpDX.ViewportF(0, 0, pipeline.Size.Width, pipeline.Size.Height);
             var scissorRectangle = new SharpDX.Rectangle(0, 0, pipeline.Size.Width, pipeline.Size.Height);
@@ -27,7 +27,7 @@ namespace DxPlanets.Game
 
             var rtvHandle = pipeline.RenderTargetViewHeap.CPUDescriptorHandleForHeapStart + pipeline.FrameIndex * pipeline.RtvDescriptorSize;
             pipelineAssets.CommandList.SetRenderTargets(rtvHandle, null);
-            pipelineAssets.CommandList.ClearRenderTargetView(rtvHandle, new SharpDX.Color4(0, 0.2f, 0.6f, 1), 0, null);
+            pipelineAssets.CommandList.ClearRenderTargetView(rtvHandle, GraphicsSettings.ClearColor.Value, 0, null);
             pipelineAssets.CommandList.PrimitiveTopology = SharpDX.Direct3D.PrimitiveTopology.TriangleList;
             pipelineAssets.CommandList.SetVertexBuffer(0, pipelineAssets.VertexBufferView);
             pipelineAssets.CommandList.DrawInstanced(3, 1, 0, 0);
