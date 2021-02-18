@@ -16,8 +16,28 @@ namespace DxPlanets
             var pipeline = new Pipeline.Pipeline(2, form.GraphicsPanel.ClientSize, form.GraphicsPanel.Handle);
             var pipelineAssets = new Pipeline.PipelineAssets(pipeline);
             var fpsCounter = new FpsCounter();
-            var game = new Game.Game();
-            var bridge = new UI.Bridge(game, fpsCounter);
+            var engine = new Engine.Engine();
+            var bridge = new UI.Bridge(engine, fpsCounter);
+
+            form.GraphicsPanel.KeyDown += (object sender, System.Windows.Forms.KeyEventArgs e) =>
+            {
+                System.Diagnostics.Trace.WriteLine(e.KeyData);
+                switch (e.KeyData)
+                {
+                    case System.Windows.Forms.Keys.W:
+                        engine.Camera.MoveForward(1f);
+                        break;
+                    case System.Windows.Forms.Keys.A:
+                        engine.Camera.MoveLeft(1f);
+                        break;
+                    case System.Windows.Forms.Keys.S:
+                        engine.Camera.MoveBackward(1f);
+                        break;
+                    case System.Windows.Forms.Keys.D:
+                        engine.Camera.MoveRight(1f);
+                        break;
+                }
+            };
 
             form.WebView.CoreWebView2InitializationCompleted += (object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e) =>
             {
@@ -43,8 +63,8 @@ namespace DxPlanets
                 var delta = System.TimeSpan.FromTicks(now - last);
                 last = now;
 
-                game.Update(pipeline, pipelineAssets, total, delta);
-                game.Render(pipeline, pipelineAssets);
+                engine.Update(pipeline, pipelineAssets, total, delta);
+                engine.Render(pipeline, pipelineAssets);
                 pipeline.MoveToNextFrame();
 
                 System.Windows.Forms.Application.DoEvents();

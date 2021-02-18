@@ -5,13 +5,13 @@ namespace DxPlanets.UI
         public State State { get; private set; }
         private Microsoft.Web.WebView2.Core.CoreWebView2 coreWebView2 = null;
 
-        public Bridge(Game.Game game, FpsCounter fpsCounter)
+        public Bridge(Engine.Engine engine, FpsCounter fpsCounter)
         {
             State = new State
             {
-                Projection = game.GraphicsSettings.Projection,
+                Projection = engine.GraphicsSettings.Projection,
                 Fps = fpsCounter.Fps,
-                ClearColor = game.GraphicsSettings.ClearColor
+                ClearColor = engine.GraphicsSettings.ClearColor
             };
         }
 

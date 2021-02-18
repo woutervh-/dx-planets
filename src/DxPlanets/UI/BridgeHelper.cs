@@ -2,26 +2,26 @@ namespace DxPlanets.UI
 {
     static class BridgeHelper
     {
-        public static string ProjectionToString(Game.Settings.GraphicsSettings.ProjectionSetting projection)
+        public static string ProjectionToString(Engine.Settings.GraphicsSettings.ProjectionSetting projection)
         {
             switch (projection)
             {
-                case Game.Settings.GraphicsSettings.ProjectionSetting.ORTHOGRAPHIC:
+                case Engine.Settings.GraphicsSettings.ProjectionSetting.ORTHOGRAPHIC:
                     return "orthographic";
-                case Game.Settings.GraphicsSettings.ProjectionSetting.PERSPECTIVE:
+                case Engine.Settings.GraphicsSettings.ProjectionSetting.PERSPECTIVE:
                     return "perspective";
             }
             throw new System.ArgumentException("Invalid projection.");
         }
 
-        public static Game.Settings.GraphicsSettings.ProjectionSetting ProjectionFromString(string projection)
+        public static Engine.Settings.GraphicsSettings.ProjectionSetting ProjectionFromString(string projection)
         {
             switch (projection)
             {
                 case "orthographic":
-                    return Game.Settings.GraphicsSettings.ProjectionSetting.ORTHOGRAPHIC;
+                    return Engine.Settings.GraphicsSettings.ProjectionSetting.ORTHOGRAPHIC;
                 case "perspective":
-                    return Game.Settings.GraphicsSettings.ProjectionSetting.PERSPECTIVE;
+                    return Engine.Settings.GraphicsSettings.ProjectionSetting.PERSPECTIVE;
             }
             throw new System.ArgumentException("Invalid projection.");
         }

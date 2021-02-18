@@ -1,8 +1,9 @@
-namespace DxPlanets.Game
+namespace DxPlanets.Engine
 {
-    class Game
+    class Engine
     {
         public Settings.GraphicsSettings GraphicsSettings = new Settings.GraphicsSettings();
+        public Camera Camera = new Camera();
 
         Pipeline.PipelineAssets.ConstantBuffer constantBufferData = new Pipeline.PipelineAssets.ConstantBuffer()
         {
@@ -50,8 +51,9 @@ namespace DxPlanets.Game
             SharpDX.Matrix viewMatrix;
             SharpDX.Matrix projectionMatrix;
 
-            worldMatrix = SharpDX.Matrix.RotationY((float)total.TotalSeconds);
-            viewMatrix = SharpDX.Matrix.LookAtLH(new SharpDX.Vector3(0f, 0f, -5f), SharpDX.Vector3.Zero, SharpDX.Vector3.Up);
+            // worldMatrix = SharpDX.Matrix.RotationY((float)total.TotalSeconds);
+            worldMatrix = SharpDX.Matrix.Identity;
+            viewMatrix = SharpDX.Matrix.LookAtLH(Camera.Position.Value, Camera.Position.Value + SharpDX.Vector3.ForwardLH, SharpDX.Vector3.Up);
 
             if (GraphicsSettings.Projection.Value == Settings.GraphicsSettings.ProjectionSetting.ORTHOGRAPHIC)
             {
