@@ -47,6 +47,8 @@ namespace DxPlanets.Engine
 
         public void Update(Pipeline.Pipeline pipeline, Pipeline.PipelineAssets pipelineAssets, System.TimeSpan total, System.TimeSpan delta)
         {
+            Camera.Update(total, delta);
+
             SharpDX.Matrix worldMatrix;
             SharpDX.Matrix viewMatrix;
             SharpDX.Matrix projectionMatrix;

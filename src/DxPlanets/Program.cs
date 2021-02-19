@@ -21,20 +21,38 @@ namespace DxPlanets
 
             form.GraphicsPanel.KeyDown += (object sender, System.Windows.Forms.KeyEventArgs e) =>
             {
-                System.Diagnostics.Trace.WriteLine(e.KeyData);
                 switch (e.KeyData)
                 {
                     case System.Windows.Forms.Keys.W:
-                        engine.Camera.MoveForward(1f);
+                        engine.Camera.IsMovingForward.OnNext(true);
                         break;
                     case System.Windows.Forms.Keys.A:
-                        engine.Camera.MoveLeft(1f);
+                        engine.Camera.IsMovingLeft.OnNext(true);
                         break;
                     case System.Windows.Forms.Keys.S:
-                        engine.Camera.MoveBackward(1f);
+                        engine.Camera.IsMovingBackward.OnNext(true);
                         break;
                     case System.Windows.Forms.Keys.D:
-                        engine.Camera.MoveRight(1f);
+                        engine.Camera.IsMovingRight.OnNext(true);
+                        break;
+                }
+            };
+
+            form.GraphicsPanel.KeyUp += (object sender, System.Windows.Forms.KeyEventArgs e) =>
+            {
+                switch (e.KeyData)
+                {
+                    case System.Windows.Forms.Keys.W:
+                        engine.Camera.IsMovingForward.OnNext(false);
+                        break;
+                    case System.Windows.Forms.Keys.A:
+                        engine.Camera.IsMovingLeft.OnNext(false);
+                        break;
+                    case System.Windows.Forms.Keys.S:
+                        engine.Camera.IsMovingBackward.OnNext(false);
+                        break;
+                    case System.Windows.Forms.Keys.D:
+                        engine.Camera.IsMovingRight.OnNext(false);
                         break;
                 }
             };
