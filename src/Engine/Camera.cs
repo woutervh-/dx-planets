@@ -7,6 +7,17 @@ namespace DxPlanets.Engine
         public System.Reactive.Subjects.BehaviorSubject<bool> IsMovingBackward = new System.Reactive.Subjects.BehaviorSubject<bool>(false);
         public System.Reactive.Subjects.BehaviorSubject<bool> IsMovingLeft = new System.Reactive.Subjects.BehaviorSubject<bool>(false);
         public System.Reactive.Subjects.BehaviorSubject<bool> IsMovingRight = new System.Reactive.Subjects.BehaviorSubject<bool>(false);
+        public System.Reactive.Subjects.BehaviorSubject<SharpDX.Matrix> ViewProjection;
+
+        private static SharpDX.Matrix GetViewProjection(SharpDX.Vector3 position, Settings.GraphicsSettings.ProjectionSetting projection)
+        {
+
+        }
+
+        public Camera(System.Reactive.Subjects.BehaviorSubject<Settings.GraphicsSettings.ProjectionSetting> projection)
+        {
+            ViewProjection = System.Reactive.Linq.CombineLatest<SharpDX.Vector3, Settings.GraphicsSettings.ProjectionSetting, SharpDX.Matrix>(Position, projection, GetViewProjection);
+        }
 
         public void MoveForward(float amount)
         {

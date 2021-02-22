@@ -12,7 +12,7 @@ namespace DxPlanets
             System.Windows.Forms.Application.EnableVisualStyles();
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
 
-            var form = new Form(600, 400);
+            var form = new Form(800, 600);
             var pipeline = new Pipeline.Pipeline(2, form.GraphicsPanel.ClientSize, form.GraphicsPanel.Handle);
             var pipelineAssets = new Pipeline.PipelineAssets(pipeline);
             var fpsCounter = new FpsCounter();
@@ -55,6 +55,10 @@ namespace DxPlanets
                         engine.Camera.IsMovingRight.OnNext(false);
                         break;
                 }
+            };
+
+            form.GraphicsPanel.MouseMove += (object sender, System.Windows.Forms.MouseEventArgs e) =>
+            {
             };
 
             form.WebView.CoreWebView2InitializationCompleted += (object sender, Microsoft.Web.WebView2.Core.CoreWebView2InitializationCompletedEventArgs e) =>

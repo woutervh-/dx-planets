@@ -20,10 +20,9 @@ namespace DxPlanets.UI
             this.coreWebView2 = coreWebView2;
             coreWebView2.DOMContentLoaded += (object sender, Microsoft.Web.WebView2.Core.CoreWebView2DOMContentLoadedEventArgs e) =>
             {
-                synchronizeFullState();
+                registerOutgoingEvents();
+                registerIncomingEvents();
             };
-            registerOutgoingEvents();
-            registerIncomingEvents();
         }
 
         private void registerOutgoingEvents()
@@ -57,17 +56,6 @@ namespace DxPlanets.UI
                     State.ClearColor.OnNext(BridgeHelper.ColorFromString(clearColor.GetString()));
                 }
             };
-        }
-
-        private void synchronizeFullState()
-        {
-            var fullState = new System.Collections.Generic.Dictionary<string, object>
-            {
-                { "fps", State.Fps.Value },
-                { "projection", BridgeHelper.ProjectionToString(State.Projection.Value) },
-                { "clearColor", BridgeHelper.ColorToString(State.ClearColor.Value) }
-            };
-            sendState(fullState);
         }
 
         private void sendState(string propertyName)
