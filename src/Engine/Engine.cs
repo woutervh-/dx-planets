@@ -3,7 +3,6 @@ namespace DxPlanets.Engine
     class Engine
     {
         public Settings.GraphicsSettings GraphicsSettings = new Settings.GraphicsSettings();
-        public System.Reactive.Subjects.BehaviorSubject<System.Drawing.Size> Size;
         public Camera Camera;
 
         public Engine()
