@@ -2,58 +2,73 @@ namespace DxPlanets.Engine
 {
     class Camera
     {
-        public System.Reactive.Subjects.BehaviorSubject<SharpDX.Vector3> Position = new System.Reactive.Subjects.BehaviorSubject<SharpDX.Vector3>(new SharpDX.Vector3(0f, 0f, -5f));
-        public System.Reactive.Subjects.BehaviorSubject<bool> IsMovingForward = new System.Reactive.Subjects.BehaviorSubject<bool>(false);
-        public System.Reactive.Subjects.BehaviorSubject<bool> IsMovingBackward = new System.Reactive.Subjects.BehaviorSubject<bool>(false);
-        public System.Reactive.Subjects.BehaviorSubject<bool> IsMovingLeft = new System.Reactive.Subjects.BehaviorSubject<bool>(false);
-        public System.Reactive.Subjects.BehaviorSubject<bool> IsMovingRight = new System.Reactive.Subjects.BehaviorSubject<bool>(false);
-        public System.Reactive.Subjects.BehaviorSubject<SharpDX.Matrix> ViewProjection;
+        public bool IsMovingForward = false;
+        public bool IsMovingBackward = false;
+        public bool IsMovingLeft = false;
+        public bool IsMovingRight = false;
 
-        private static SharpDX.Matrix GetViewProjection(SharpDX.Vector3 position, Settings.GraphicsSettings.ProjectionSetting projection)
-        {
-
-        }
+        private SharpDX.Vector3 position = new SharpDX.Vector3(0f, 0f, -5f);
+        private System.Reactive.Subjects.BehaviorSubject<Settings.GraphicsSettings.ProjectionSetting> projection;
 
         public Camera(System.Reactive.Subjects.BehaviorSubject<Settings.GraphicsSettings.ProjectionSetting> projection)
         {
-            ViewProjection = System.Reactive.Linq.CombineLatest<SharpDX.Vector3, Settings.GraphicsSettings.ProjectionSetting, SharpDX.Matrix>(Position, projection, GetViewProjection);
+            this.projection = projection;
+        }
+
+        public SharpDX.Matrix GetViewProjection(System.Drawing.Size size)
+        {
+            SharpDX.Matrix viewMatrix = SharpDX.Matrix.LookAtLH(position, position + SharpDX.Vector3.ForwardLH, SharpDX.Vector3.Up);
+            SharpDX.Matrix projectionMatrix;
+
+            if (projection.Value == Settings.GraphicsSettings.ProjectionSetting.ORTHOGRAPHIC)
+            {
+                projectionMatrix = SharpDX.Matrix.OrthoOffCenterLH(-1f, 1f, -1f, 1f, 0f, 100f);
+            }
+            else
+            {
+                var fov = (float)System.Math.PI / 3f;
+                var aspect = (float)size.Width / size.Height;
+                projectionMatrix = SharpDX.Matrix.PerspectiveFovLH(fov, aspect, 0f, 100f);
+            }
+
+            return viewMatrix * projectionMatrix;
         }
 
         public void MoveForward(float amount)
         {
-            Position.OnNext(Position.Value + SharpDX.Vector3.ForwardLH * amount);
+            position += SharpDX.Vector3.ForwardLH * amount;
         }
 
         public void MoveBackward(float amount)
         {
-            Position.OnNext(Position.Value + SharpDX.Vector3.BackwardLH * amount);
+            position += SharpDX.Vector3.BackwardLH * amount;
         }
 
         public void MoveLeft(float amount)
         {
-            Position.OnNext(Position.Value + SharpDX.Vector3.Left * amount);
+            position += SharpDX.Vector3.Left * amount;
         }
 
         public void MoveRight(float amount)
         {
-            Position.OnNext(Position.Value + SharpDX.Vector3.Right * amount);
+            position += SharpDX.Vector3.Right * amount;
         }
 
         public void Update(System.TimeSpan total, System.TimeSpan delta)
         {
-            if (IsMovingForward.Value)
+            if (IsMovingForward)
             {
                 MoveForward((float)delta.TotalSeconds);
             }
-            if (IsMovingBackward.Value)
+            if (IsMovingBackward)
             {
                 MoveBackward((float)delta.TotalSeconds);
             }
-            if (IsMovingLeft.Value)
+            if (IsMovingLeft)
             {
                 MoveLeft((float)delta.TotalSeconds);
             }
-            if (IsMovingRight.Value)
+            if (IsMovingRight)
             {
                 MoveRight((float)delta.TotalSeconds);
             }

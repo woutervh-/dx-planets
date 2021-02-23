@@ -3,7 +3,13 @@ namespace DxPlanets.Engine
     class Engine
     {
         public Settings.GraphicsSettings GraphicsSettings = new Settings.GraphicsSettings();
-        public Camera Camera = new Camera();
+        public System.Reactive.Subjects.BehaviorSubject<System.Drawing.Size> Size;
+        public Camera Camera;
+
+        public Engine()
+        {
+            Camera = new Camera(GraphicsSettings.Projection);
+        }
 
         Pipeline.PipelineAssets.ConstantBuffer constantBufferData = new Pipeline.PipelineAssets.ConstantBuffer()
         {
@@ -50,25 +56,13 @@ namespace DxPlanets.Engine
             Camera.Update(total, delta);
 
             SharpDX.Matrix worldMatrix;
-            SharpDX.Matrix viewMatrix;
-            SharpDX.Matrix projectionMatrix;
+            SharpDX.Matrix viewProjectionMatrix;
 
             // worldMatrix = SharpDX.Matrix.RotationY((float)total.TotalSeconds);
             worldMatrix = SharpDX.Matrix.Identity;
-            viewMatrix = SharpDX.Matrix.LookAtLH(Camera.Position.Value, Camera.Position.Value + SharpDX.Vector3.ForwardLH, SharpDX.Vector3.Up);
+            viewProjectionMatrix = Camera.GetViewProjection(pipeline.Size);
 
-            if (GraphicsSettings.Projection.Value == Settings.GraphicsSettings.ProjectionSetting.ORTHOGRAPHIC)
-            {
-                projectionMatrix = SharpDX.Matrix.OrthoOffCenterLH(-1f, 1f, -1f, 1f, 0f, 100f);
-            }
-            else
-            {
-                var fov = (float)System.Math.PI / 3f;
-                var aspect = (float)pipeline.Size.Width / pipeline.Size.Height;
-                projectionMatrix = SharpDX.Matrix.PerspectiveFovLH(fov, aspect, 0f, 100f);
-            }
-
-            constantBufferData.viewProjectionMatrix = worldMatrix * viewMatrix * projectionMatrix;
+            constantBufferData.viewProjectionMatrix = worldMatrix * viewProjectionMatrix;
             SharpDX.Utilities.Write(pipelineAssets.ConstantBufferPointer, ref constantBufferData);
         }
     }

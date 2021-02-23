@@ -24,16 +24,16 @@ namespace DxPlanets
                 switch (e.KeyData)
                 {
                     case System.Windows.Forms.Keys.W:
-                        engine.Camera.IsMovingForward.OnNext(true);
+                        engine.Camera.IsMovingForward = true;
                         break;
                     case System.Windows.Forms.Keys.A:
-                        engine.Camera.IsMovingLeft.OnNext(true);
+                        engine.Camera.IsMovingLeft = true;
                         break;
                     case System.Windows.Forms.Keys.S:
-                        engine.Camera.IsMovingBackward.OnNext(true);
+                        engine.Camera.IsMovingBackward = true;
                         break;
                     case System.Windows.Forms.Keys.D:
-                        engine.Camera.IsMovingRight.OnNext(true);
+                        engine.Camera.IsMovingRight = true;
                         break;
                 }
             };
@@ -43,16 +43,16 @@ namespace DxPlanets
                 switch (e.KeyData)
                 {
                     case System.Windows.Forms.Keys.W:
-                        engine.Camera.IsMovingForward.OnNext(false);
+                        engine.Camera.IsMovingForward = false;
                         break;
                     case System.Windows.Forms.Keys.A:
-                        engine.Camera.IsMovingLeft.OnNext(false);
+                        engine.Camera.IsMovingLeft = false;
                         break;
                     case System.Windows.Forms.Keys.S:
-                        engine.Camera.IsMovingBackward.OnNext(false);
+                        engine.Camera.IsMovingBackward = false;
                         break;
                     case System.Windows.Forms.Keys.D:
-                        engine.Camera.IsMovingRight.OnNext(false);
+                        engine.Camera.IsMovingRight = false;
                         break;
                 }
             };
