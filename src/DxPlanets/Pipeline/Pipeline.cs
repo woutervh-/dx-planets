@@ -4,7 +4,7 @@ namespace DxPlanets.Pipeline
     {
         public int FrameCount { get; private set; }
         public System.Drawing.Size Size { get; private set; }
-        public SharpDX.Direct3D12.Device Device { get; private set; }
+        public SharpDX.Direct3D12.Device D3D12Device { get; private set; }
         public SharpDX.Direct3D12.CommandAllocator[] CommandAllocators { get; private set; }
         public SharpDX.Direct3D12.DescriptorHeap RenderTargetViewHeap { get; private set; }
         public SharpDX.Direct3D12.Resource[] RenderTargets { get; private set; }
@@ -23,9 +23,11 @@ namespace DxPlanets.Pipeline
             Size = size;
 
             // Pipeline
-            var device = new SharpDX.Direct3D12.Device(null, SharpDX.Direct3D.FeatureLevel.Level_12_1);
+            var d3d12Device = new SharpDX.Direct3D12.Device(null, SharpDX.Direct3D.FeatureLevel.Level_12_1);
+            var d3d11Device = SharpDX.Direct3D11.Device.CreateFromDirect3D12(d3d12Device, SharpDX.Direct3D11.DeviceCreationFlags.BgraSupport, null, null);
+
             var queueDescription = new SharpDX.Direct3D12.CommandQueueDescription(SharpDX.Direct3D12.CommandListType.Direct);
-            var commandQueue = device.CreateCommandQueue(queueDescription);
+            var commandQueue = d3d12Device.CreateCommandQueue(queueDescription);
             var swapChainDescription = new SharpDX.DXGI.SwapChainDescription()
             {
                 BufferCount = frameCount,
@@ -43,7 +45,7 @@ namespace DxPlanets.Pipeline
                 Flags = SharpDX.Direct3D12.DescriptorHeapFlags.None,
                 Type = SharpDX.Direct3D12.DescriptorHeapType.RenderTargetView
             };
-            var renderTargetViewHeap = device.CreateDescriptorHeap(rtvHeapDescription);
+            var renderTargetViewHeap = d3d12Device.CreateDescriptorHeap(rtvHeapDescription);
             var rtvHandle = renderTargetViewHeap.CPUDescriptorHandleForHeapStart;
             var factory = new SharpDX.DXGI.Factory4();
             var swapChain = new SharpDX.DXGI.SwapChain(factory, commandQueue, swapChainDescription);
@@ -51,25 +53,25 @@ namespace DxPlanets.Pipeline
             var frameIndex = swapChain3.CurrentBackBufferIndex;
             var renderTargets = new SharpDX.Direct3D12.Resource[frameCount];
             var commandAllocators = new SharpDX.Direct3D12.CommandAllocator[frameCount];
-            var rtvDescriptorSize = device.GetDescriptorHandleIncrementSize(SharpDX.Direct3D12.DescriptorHeapType.RenderTargetView);
+            var rtvDescriptorSize = d3d12Device.GetDescriptorHandleIncrementSize(SharpDX.Direct3D12.DescriptorHeapType.RenderTargetView);
             for (int i = 0; i < frameCount; i++)
             {
                 renderTargets[i] = swapChain3.GetBackBuffer<SharpDX.Direct3D12.Resource>(i);
-                commandAllocators[i] = device.CreateCommandAllocator(SharpDX.Direct3D12.CommandListType.Direct);
-                device.CreateRenderTargetView(renderTargets[i], null, rtvHandle);
+                commandAllocators[i] = d3d12Device.CreateCommandAllocator(SharpDX.Direct3D12.CommandListType.Direct);
+                d3d12Device.CreateRenderTargetView(renderTargets[i], null, rtvHandle);
                 rtvHandle += rtvDescriptorSize;
             }
 
             // Assets
             var fenceEvent = new System.Threading.AutoResetEvent(false);
-            var fence = device.CreateFence(0, SharpDX.Direct3D12.FenceFlags.None);
+            var fence = d3d12Device.CreateFence(0, SharpDX.Direct3D12.FenceFlags.None);
             var fenceValues = new int[frameCount];
             for (int i = 0; i < frameCount; i++)
             {
                 fenceValues[i] = 1;
             }
 
-            Device = device;
+            D3D12Device = d3d12Device;
             CommandAllocators = commandAllocators;
             RenderTargetViewHeap = renderTargetViewHeap;
             RenderTargets = renderTargets;
@@ -95,7 +97,7 @@ namespace DxPlanets.Pipeline
             for (int i = 0; i < FrameCount; i++)
             {
                 RenderTargets[i] = SwapChain3.GetBackBuffer<SharpDX.Direct3D12.Resource>(i);
-                Device.CreateRenderTargetView(RenderTargets[i], null, rtvHandle);
+                D3D12Device.CreateRenderTargetView(RenderTargets[i], null, rtvHandle);
                 rtvHandle += RtvDescriptorSize;
                 FenceValues[i] = FenceValues[FrameIndex];
             }
