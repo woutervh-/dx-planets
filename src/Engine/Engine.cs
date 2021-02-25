@@ -46,6 +46,18 @@ namespace DxPlanets.Engine
         {
             PopulateCommandList(pipeline, pipelineAssets);
             pipeline.CommandQueue.ExecuteCommandList(pipelineAssets.CommandList);
+
+            var brush = new SharpDX.Direct2D1.SolidColorBrush(pipeline.D2DRenderTargets[0], SharpDX.Color4.White);
+            pipeline.D3D11On12Device.AcquireWrappedResources(new SharpDX.Direct3D11.Resource[] { pipeline.WrappedBackBuffers[pipeline.FrameIndex] }, 1);
+            pipeline.D2DRenderTargets[pipeline.FrameIndex].BeginDraw();
+            pipeline.D2DRenderTargets[pipeline.FrameIndex].FillRectangle(new SharpDX.Mathematics.Interop.RawRectangleF(5f, 5f, 100f, 100f), brush);
+            // textBrush.Color = Color4.Lerp(colors[t], colors[t + 1], f);
+            // pipeline.D2DRenderTargets[pipeline.FrameIndex].DrawText("Hello Text", textFormat, new SharpDX.Mathematics.Interop.RawRectangleF((float)Math.Sin(Environment.TickCount / 1000.0F) * 200 + 400, 10, 2000, 500), textBrush);
+            pipeline.D2DRenderTargets[pipeline.FrameIndex].EndDraw();
+            pipeline.D3D11On12Device.ReleaseWrappedResources(new SharpDX.Direct3D11.Resource[] { pipeline.WrappedBackBuffers[pipeline.FrameIndex] }, 1);
+            pipeline.D3D11Device.ImmediateContext.Flush();
+            brush.Dispose();
+
             pipeline.SwapChain3.Present(1, 0);
             pipeline.MoveToNextFrame();
         }

@@ -12,6 +12,10 @@ namespace DxPlanets.Pipeline
         public SharpDX.DXGI.SwapChain3 SwapChain3 { get; private set; }
         public SharpDX.Direct3D12.Fence Fence { get; private set; }
         public System.Threading.AutoResetEvent FenceEvent { get; private set; }
+        public SharpDX.Direct3D11.Device D3D11Device { get; private set; }
+        public SharpDX.Direct3D11.Device11On12 D3D11On12Device { get; private set; }
+        public SharpDX.Direct3D11.Resource[] WrappedBackBuffers { get; private set; }
+        public SharpDX.Direct2D1.RenderTarget[] D2DRenderTargets { get; private set; }
         public int[] FenceValues { get; private set; }
         public int RtvDescriptorSize { get; private set; }
         public int FrameIndex { get; private set; }
@@ -24,7 +28,6 @@ namespace DxPlanets.Pipeline
 
             // Pipeline
             var d3d12Device = new SharpDX.Direct3D12.Device(null, SharpDX.Direct3D.FeatureLevel.Level_12_1);
-            var d3d11Device = SharpDX.Direct3D11.Device.CreateFromDirect3D12(d3d12Device, SharpDX.Direct3D11.DeviceCreationFlags.BgraSupport, null, null);
 
             var queueDescription = new SharpDX.Direct3D12.CommandQueueDescription(SharpDX.Direct3D12.CommandListType.Direct);
             var commandQueue = d3d12Device.CreateCommandQueue(queueDescription);
@@ -47,19 +50,35 @@ namespace DxPlanets.Pipeline
             };
             var renderTargetViewHeap = d3d12Device.CreateDescriptorHeap(rtvHeapDescription);
             var rtvHandle = renderTargetViewHeap.CPUDescriptorHandleForHeapStart;
-            var factory = new SharpDX.DXGI.Factory4();
-            var swapChain = new SharpDX.DXGI.SwapChain(factory, commandQueue, swapChainDescription);
+            var dxgiFactory = new SharpDX.DXGI.Factory4();
+            var swapChain = new SharpDX.DXGI.SwapChain(dxgiFactory, commandQueue, swapChainDescription);
             var swapChain3 = swapChain.QueryInterface<SharpDX.DXGI.SwapChain3>();
             var frameIndex = swapChain3.CurrentBackBufferIndex;
             var renderTargets = new SharpDX.Direct3D12.Resource[frameCount];
             var commandAllocators = new SharpDX.Direct3D12.CommandAllocator[frameCount];
             var rtvDescriptorSize = d3d12Device.GetDescriptorHandleIncrementSize(SharpDX.Direct3D12.DescriptorHeapType.RenderTargetView);
+
+            var d2d1Factory = new SharpDX.Direct2D1.Factory();
+            var d3d11Device = SharpDX.Direct3D11.Device.CreateFromDirect3D12(d3d12Device, SharpDX.Direct3D11.DeviceCreationFlags.BgraSupport, null, null, commandQueue);
+            var d3d11On12Device = d3d11Device.QueryInterface<SharpDX.Direct3D11.Device11On12>();
+            var wrappedBackBuffers = new SharpDX.Direct3D11.Resource[frameCount];
+            var d2dRenderTargets = new SharpDX.Direct2D1.RenderTarget[frameCount];
+
             for (int i = 0; i < frameCount; i++)
             {
                 renderTargets[i] = swapChain3.GetBackBuffer<SharpDX.Direct3D12.Resource>(i);
                 commandAllocators[i] = d3d12Device.CreateCommandAllocator(SharpDX.Direct3D12.CommandListType.Direct);
                 d3d12Device.CreateRenderTargetView(renderTargets[i], null, rtvHandle);
                 rtvHandle += rtvDescriptorSize;
+
+                var format = new SharpDX.Direct3D11.D3D11ResourceFlags()
+                {
+                    BindFlags = (int)SharpDX.Direct3D11.BindFlags.RenderTarget,
+                    CPUAccessFlags = (int)SharpDX.Direct3D11.CpuAccessFlags.None
+                };
+                d3d11On12Device.CreateWrappedResource(renderTargets[i], format, (int)SharpDX.Direct3D12.ResourceStates.Present, (int)SharpDX.Direct3D12.ResourceStates.RenderTarget, typeof(SharpDX.Direct3D11.Resource).GUID, out wrappedBackBuffers[i]);
+                var surface = wrappedBackBuffers[i].QueryInterface<SharpDX.DXGI.Surface>();
+                d2dRenderTargets[i] = new SharpDX.Direct2D1.RenderTarget(d2d1Factory, surface, new SharpDX.Direct2D1.RenderTargetProperties(new SharpDX.Direct2D1.PixelFormat(SharpDX.DXGI.Format.Unknown, SharpDX.Direct2D1.AlphaMode.Premultiplied)));
             }
 
             // Assets
@@ -79,6 +98,10 @@ namespace DxPlanets.Pipeline
             SwapChain3 = swapChain3;
             Fence = fence;
             FenceEvent = fenceEvent;
+            D3D11Device = d3d11Device;
+            D3D11On12Device = d3d11On12Device;
+            WrappedBackBuffers = wrappedBackBuffers;
+            D2DRenderTargets = d2dRenderTargets;
             FenceValues = fenceValues;
             RtvDescriptorSize = rtvDescriptorSize;
             FrameIndex = frameIndex;
