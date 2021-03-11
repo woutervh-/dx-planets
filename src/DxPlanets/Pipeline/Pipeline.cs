@@ -16,6 +16,7 @@ namespace DxPlanets.Pipeline
         public SharpDX.Direct3D11.Device11On12 D3D11On12Device { get; private set; }
         public SharpDX.Direct3D11.Resource[] WrappedBackBuffers { get; private set; }
         public SharpDX.Direct2D1.RenderTarget[] D2DRenderTargets { get; private set; }
+        public SharpDX.Direct3D12.GraphicsCommandList CommandList { get; private set; } // TODO: find out what can be "Asset" and what not.
         public int[] FenceValues { get; private set; }
         public int RtvDescriptorSize { get; private set; }
         public int FrameIndex { get; private set; }
@@ -90,6 +91,9 @@ namespace DxPlanets.Pipeline
                 fenceValues[i] = 1;
             }
 
+            var commandList = d3d12Device.CreateCommandList(SharpDX.Direct3D12.CommandListType.Direct, commandAllocators[frameIndex], pipelineState);
+            commandList.Close();
+
             D3D12Device = d3d12Device;
             CommandAllocators = commandAllocators;
             RenderTargetViewHeap = renderTargetViewHeap;
@@ -102,6 +106,7 @@ namespace DxPlanets.Pipeline
             D3D11On12Device = d3d11On12Device;
             WrappedBackBuffers = wrappedBackBuffers;
             D2DRenderTargets = d2dRenderTargets;
+            CommandList = commandList;
             FenceValues = fenceValues;
             RtvDescriptorSize = rtvDescriptorSize;
             FrameIndex = frameIndex;

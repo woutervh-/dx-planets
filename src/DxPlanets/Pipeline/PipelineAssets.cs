@@ -2,7 +2,6 @@ namespace DxPlanets.Pipeline
 {
     class PipelineAssets
     {
-        public SharpDX.Direct3D12.GraphicsCommandList CommandList { get; private set; }
         public SharpDX.Direct3D12.PipelineState PipelineState { get; private set; }
         public SharpDX.Direct3D12.RootSignature RootSignature { get; private set; }
         public SharpDX.Direct3D12.VertexBufferView VertexBufferView { get; private set; }
@@ -62,9 +61,6 @@ namespace DxPlanets.Pipeline
             };
             var constantBufferViewHeap = pipeline.D3D12Device.CreateDescriptorHeap(cbvHeapDescription);
 
-            var commandList = pipeline.D3D12Device.CreateCommandList(SharpDX.Direct3D12.CommandListType.Direct, pipeline.CommandAllocators[pipeline.FrameIndex], pipelineState);
-            commandList.Close();
-
             var constantBuffer = pipeline.D3D12Device.CreateCommittedResource(new SharpDX.Direct3D12.HeapProperties(SharpDX.Direct3D12.HeapType.Upload), SharpDX.Direct3D12.HeapFlags.None, SharpDX.Direct3D12.ResourceDescription.Buffer(1024 * 64), SharpDX.Direct3D12.ResourceStates.GenericRead);
             var cbvDescription = new SharpDX.Direct3D12.ConstantBufferViewDescription()
             {
@@ -90,7 +86,6 @@ namespace DxPlanets.Pipeline
             vertexBufferView.StrideInBytes = SharpDX.Utilities.SizeOf<Vertex>();
             vertexBufferView.SizeInBytes = vertexBufferSize;
 
-            CommandList = commandList;
             PipelineState = pipelineState;
             RootSignature = rootSignature;
             VertexBufferView = vertexBufferView;
